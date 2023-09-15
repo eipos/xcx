@@ -1,0 +1,170 @@
+// index.js
+Page({
+  data: {
+    imageUrl: '', // 存储用户上传的照片链接
+    brightestPoint: undefined, // 存储最亮的点坐标和亮度值
+    darkestPoint: undefined, // 存储最暗的点坐标和亮度值
+    neutralPoint: undefined, // 存储中性灰点坐标和亮度值
+    loading: false, // 是否正在分析
+    error: false, // 是否出现错误
+    canvasWidth: 0, // 画布宽度
+    canvasHeight: 0, // 画布高度
+  },
+
+  onImageLoad: function (e) {
+    // 图片加载完成后获取画布尺寸
+    const width = e.detail.width;
+    const height = e.detail.height;
+    this.setData({
+      canvasWidth: width,
+      canvasHeight: height,
+    });
+
+    // 开始分析图像
+    this.analyzeImage(this.data.imageUrl, width, height);
+  },
+
+  chooseImage: function () {
+    wx.chooseImage({
+      success: (res) => {
+        const tempFilePath = res.tempFilePaths[0];
+        this.setData({
+          imageUrl: tempFilePath,
+          brightestPoint: undefined, // 重置最亮点
+          darkestPoint: undefined, // 重置最暗点
+          neutralPoint: undefined, // 重置中性灰点
+          loading: true, // 设置为正在分析
+          error: false, // 重置错误状态
+        });
+      },
+    });
+  },
+
+  analyzeImage: function (filePath, width, height) {
+    const that = this;
+
+    // 创建一个 <canvas> 元素
+    const canvas = wx.createCanvasContext('imageCanvas');
+
+    // 将图像绘制到 <canvas> 上
+    canvas.drawImage(filePath, 0, 0, width, height);
+
+    // 获取图像数据
+    canvas.draw(false, () => {
+      wx.canvasGetImageData({
+        canvasId: 'imageCanvas',
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        success: (res) => {
+          const imageData = res.data;
+
+          // 分析图像，找到最亮、最暗和中性灰点
+          const analysisResult = that.analyzeImageData(imageData, width, height);
+          that.setData({
+            brightestPoint: analysisResult.brightestPoint,
+            darkestPoint: analysisResult.darkestPoint,
+            neutralPoint: analysisResult.neutralPoint,
+            loading: false, // 分析完成
+          });
+
+          // 在画布上标记点
+          that.drawPoints(canvas, analysisResult);
+        },
+        fail: (error) => {
+          console.error(error);
+          that.setData({
+            error: true, // 处理失败
+            loading: false, // 分析完成
+          });
+        },
+      });
+    });
+  },
+
+  analyzeImageData: function (imageData, width, height) {
+    // 初始化结果
+    let brightestPoint = { x: 0, y: 0, brightness: -1 };
+    let darkestPoint = { x: 0, y: 0, brightness: 256 };
+    let neutralPoint = { x: 0, y: 0, brightness: -1 };
+
+    // 遍历图像像素，计算亮度并找到最亮、最暗和中性灰点
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // 找到最亮的点
+        if (brightness > brightestPoint.brightness) {
+          brightestPoint = { x, y, brightness };
+        }
+
+        // 找到最暗的点
+        if (brightness < darkestPoint.brightness) {
+          darkestPoint = { x, y, brightness };
+        }
+
+        // 找到中性灰点（可根据条件自定义）
+        if (brightness >= 100 && brightness <= 200) {
+          neutralPoint = { x, y, brightness };
+        }
+      }
+    }
+
+    return { brightestPoint, darkestPoint, neutralPoint };
+  },
+
+  drawPoints: function (canvas, analysisResult) {
+    const radius = 5; // 标记点的半径
+    const lineWidth = 2; // 标记线的宽度
+
+    // 绘制最亮点（红色）
+    canvas.beginPath();
+    canvas.arc(
+      analysisResult.brightestPoint.x,
+      analysisResult.brightestPoint.y,
+      radius,
+      0,
+      2 * Math.PI
+    );
+    canvas.setLineWidth(lineWidth);
+    canvas.setStrokeStyle('red');
+    canvas.stroke();
+    canvas.closePath();
+
+    // 绘制最暗点（绿色）
+    canvas.beginPath();
+    canvas.arc(
+      analysisResult.darkestPoint.x,
+      analysisResult.darkestPoint.y,
+      radius,
+      0,
+      2 * Math.PI
+    );
+    canvas.setLineWidth(lineWidth);
+    canvas.setStrokeStyle('green');
+    canvas.stroke();
+    canvas.closePath();
+
+    // 绘制中性灰点
+    canvas.beginPath();
+    canvas.arc(
+      analysisResult.neutralPoint.x,
+      analysisResult.neutralPoint.y,
+      radius,
+      0,
+      2 * Math.PI
+    );
+    canvas.setLineWidth(lineWidth);
+    canvas.setStrokeStyle('blue');
+    canvas.stroke();
+    canvas.closePath();
+
+    // 绘制到画布上
+    canvas.draw(true);
+  },
+});
