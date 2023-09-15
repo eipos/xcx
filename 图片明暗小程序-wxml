@@ -1,0 +1,27 @@
+<!-- index.wxml -->
+
+<view class="container">
+  <view class="image-container">
+    <image src="{{imageUrl}}" mode="aspectFit" bindload="onImageLoad"></image>
+    <canvas canvas-id="imageCanvas" class="image-canvas"></canvas>
+  </view>
+
+  <view class="analysis-info">
+    <view class="info-row">
+      <text class="label">最亮点：</text>
+      <text>{{brightestPoint.x}}, {{brightestPoint.y}} (亮度: {{brightestPoint.brightness}})</text>
+    </view>
+    <view class="info-row">
+      <text class="label">最暗点：</text>
+      <text>{{darkestPoint.x}}, {{darkestPoint.y}} (亮度: {{darkestPoint.brightness}})</text>
+    </view>
+    <view class="info-row">
+      <text class="label">中性灰点：</text>
+      <text>{{neutralPoint.x}}, {{neutralPoint.y}} (亮度: {{neutralPoint.brightness}})</text>
+    </view>
+  </view>
+
+  <view class="button-container">
+    <button class="choose-button" bindtap="chooseImage">选择图片</button>
+  </view>
+</view>
