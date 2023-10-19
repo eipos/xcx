@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>精子分析计算器</title>
+</head>
+<body>
+    <h1>精子分析计算器</h1>
+    <form id="spermForm">
+        <label for="countTotal">总数：</label>
+        <input type="number" id="countTotal" name="countTotal" required>
+        <br>
+
+        <label for="countA">A类精子数量：</label>
+        <input type="number" id="countA" name="countA" required>
+        <br>
+
+        <label for="countB">B类精子数量：</label>
+        <input type="number" id="countB" name="countB" required>
+        <br>
+
+        <label for="countD">D类精子数量：</label>
+        <input type="number" id="countD" name="countD" required>
+        <br>
+
+        <input type="button" value="计算" onclick="calculatePercentages()">
+    </form>
+
+    <h2>结果：</h2>
+    <p>A类精子百分比：<span id="percentageA">0%</span></p>
+    <p>B类精子百分比：<span id="percentageB">0%</span></p>
+    <p>C类精子百分比：<span id="percentageC">0%</span></p>
+    <p>密度：<span id="density">0</span></p>
+
+    <script>
+        function calculatePercentages() {
+            const countTotal = parseInt(document.getElementById("countTotal").value);
+            const countA = parseInt(document.getElementById("countA").value);
+            const countB = parseInt(document.getElementById("countB").value);
+            const countD = parseInt(document.getElementById("countD").value);
+            const density = countTotal * 150;
+
+            const percentageA = (countA / countTotal) * 100;
+            const percentageB = (countB / countTotal) * 100;
+            const percentageC = 100 - percentageA - percentageB - ((countD / countTotal) * 100);
+
+            document.getElementById("percentageA").textContent = percentageA.toFixed(2) + "%";
+            document.getElementById("percentageB").textContent = percentageB.toFixed(2) + "%";
+            document.getElementById("percentageC").textContent = percentageC.toFixed(2) + "%";
+            document.getElementById("density").textContent = density;
+        }
+    </script>
+</body>
+</html>
